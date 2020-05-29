@@ -1,0 +1,26 @@
+agent.sources = s1
+agent.channels = c1
+agent.sinks = k1
+
+agent.sources.s1.type = syslogudp
+agent.sources.s1.host = 172.16.216.238
+agent.sources.s1.port = 5000
+agent.sources.s1.channels = c1
+
+#filter
+agent.sources.s1.interceptors=i1
+agent.sources.s1.interceptors.i1.type =org.oppo.InfoInterceptor$Builder
+
+agent.channels.c1.type = memory
+agent.channels.c1.capacity = 10000
+agent.channels.c1.transactionCapacity= 1000
+
+agent.sinks.k1.type = org.apache.flume.sink.kafka.KafkaSink
+agent.sinks.k1.kafka.topic = alarm_topic
+agent.sinks.k1.brokerList = 172.16.216.235:9094,172.16.216.236:9095,172.16.216.237:9096
+agent.sinks.k1.kafka.flumeBatchSize = 20
+agent.sinks.k1.kafak.producer.acks = 1
+agent.sinks.k1.kafka.producer.max.request.size = 10240000
+
+agent.sources.s1.channels = c1
+agent.sinks.k1.channel = c1

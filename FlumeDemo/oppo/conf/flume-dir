@@ -1,0 +1,22 @@
+pro.sources = s1
+pro.channels = c1
+pro.sinks = k1
+
+#pro.sources.s1.type = spooldir
+#pro.sources.s1.spoolDir = D:\log
+pro.sources.s1.fileHeader = true
+pro.sources.s1.channels = c1
+
+pro.channels.c1.type = memory
+pro.channels.c1.capacity = 1000
+pro.channels.c1.transactionCapacity= 100
+
+pro.sinks.k1.type = org.apache.flume.sink.kafka.kafkaSink
+pro.sinks.k1.kafka.topic = testTopic
+pro.sinks.k1.kafka.bootstrap.servers = localhost:9091,localhost:9092,localhost:9093
+pro.sinks.k1.kafka.flumeBatchSize = 20
+pro.sinks.k1.kafak.producer.acks = -1
+pro.sinks.k1.kafka.producer.compression.type = snappy
+
+pro.sources.s1.channels = c1
+pro.sinks.k1.channel = c1
