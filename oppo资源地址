@@ -1,0 +1,302 @@
+kafka的集群地址：
+172.16.216.235:9094
+172.16.216.236:9095
+172.16.216.237:9096
+
+
+zkServer.cmd
+
+.\bin\windows\kafka-server-start.bat .\config\server.properties
+=============================================================================================
+#启动flume
+
+#udp-flow.conf
+./bin/flume-ng agent -c /opt/flume_test/bag/apache-flume-1.9.0-bin/conf -f /opt/flume_test/bag/apache-flume-1.9.0-bin/conf/flume-udp-flow.conf -n agent -Dflume.root.logger=INFO,console
+--------------------------------------------------
+#udp-alarm.conf
+./bin/flume-ng agent -c /opt/flume_test/bag/apache-flume-1.9.0-bin/conf -f /opt/flume_test/bag/apache-flume-1.9.0-bin/conf/flume-udp-alarm.conf -n agent -Dflume.root.logger=INFO,console
+
+==========修改flume文件名后重置flume路径==========
+unset FLUME_HOME
+==================================================
+
+#flume配置环境变量
+export JAVA_HOME=/opt/flume_test/myjdk/jdk-13.0.2
+export FLUME_HOME=/opt/flume_test/bag/apache-flume-1.9.0-bin
+export PATH=$PATH:$FLUME_HOME/bin
+export PATH=$JAVA_HOME/bin
+
+
+[root@asapdbtl001cn conf]# ncat 172.16.216.235 9094 -vv
+[root@asapdbtl001cn conf]# ncat -ulvp 5000
+
+======================linux环境下操作==============================================
+#tcp模式接收,传输数据
+[root@asapdbtl001cn conf]# echo "hello word" | nc 172.16.216.238 5000
+
+#UDP方式监听服务器端5000端口
+nc -u 172.16.216.238 5000
+
+echo "Threatbook[380728]: {\"machine_port\":9443,\"net\":{\"src_ip\":\"172.19.2.246\"},\"direction\":\"in\"}" | nc -u 172.16.216.238 5000
+
+
+Linux OS环境下使用nc命令，实现UDP方式监听服务器端5000端口：
+
+服务器端输入如下命令：
+nc -lu 5000 -v
+
+在客户端输入如下命令：
+nc -u 172.16.216.238 5000
+=============redis数据库==========================
+$redis-cli -h 127.0.0.1 -p 6379 -a "mypass"
+
+==================================================
+#按utf-8的方式编码，转成bytes
+b = a.encode(encoding='utf-8')
+
+#解码成字符串
+c = b.decode(encoding='utf-8')
+
+==================================================================================================
+agent.sources.s1.interceptors=i1
+agent.sources.s1.interceptors.i1.type=org.oppo.InfoInterceptor$Builder
+===============mySql==============================================================================
+set @@sql_mode ='STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
+
+select @@sql_mode
+====================confluent_5.0.0使用===========================================================
+./bin/ksql-datagen quickstart=pageviews format=delimited topic=pageviews maxInterval=500
+./bin/ksql-datagen quickstart=users format=json topic=users maxInterval=100
+./bin/ksql-datagen quickstart=users format=json topic=users msgRate=1
+
+先修改ksqlDB服务器的配置文件: 位于/etc/ksql/ksql-server.properties
+
+# 启动zookeeper server
+bin/zookeeper-server-start etc/kafka/zookeeper.properties
+# 启动kafka server
+bin/kafka-server-start etc/kafka/server.properties
+# 启动ksql server
+bin/ksql-server-start -daemon etc/ksql/ksql-server.properties
+============================================================================
+
+然后启动ksql：
+./bin/ksql-server-start -daemon etc/ksqldb/ksql-server.properties
+
+停止ksql:
+./bin/ksql-server-stop -daemon etc/ksqldb/ksql-server.properties
+
+连接ksql：
+./bin/ksql http://localhost:8088
+
+=======================ksql语法使用Stream=========================================================
+//在ksqlDB CLI中，列出可用函数以确保ksqlDB Server加载了MULTIPLY用户定义函数：
+LIST FUNCTIONS;
+
+//显示所有topic
+show topics;
+
+//截取
+SUBSTRING("stream", 1, 4) 返回“ stre”
+
+//查看表结构
+describe
+
+//查询执行任务
+show queries;
+
+//终止查询任务
+terminate CSAS_PAGEVIEWS2_0;
+
+//时间转换
+TIMESTAMPTOSTRING(viewtime, 'yyyy-MM-dd HH:mm:ss.SSS') AS timestring
+
+//字段类型转换
+cast(extractjsonfield(threat, '$.confidence') as int)
+
+创建Stream
+#CREATE STREAM alarmInfo (viewtime bigint, userid varchar, pageid varchar) WITH \
+#(kafka_topic='testTopic05', value_format='DELIMITED');
+
+CREATE STREAM alarmInfostream (time varchar, direction varchar) WITH \
+(kafka_topic='testTopic05', value_format='JSON');
+
+
+CREATE stream users (id varchar, name varchar) WITH (kafka_topic='users', value_format='JSON');
+============================创建stream流========================================
+//创建普通json流：
+CREATE STREAM alarmStream01 (time varchar, attacker varchar, victim varchar, direction varchar, data varchar, geo_data varchar, net varchar) WITH \
+(kafka_topic='testTopic05', value_format='JSON');
+
+
+//创建告警json流
+create stream alarmStream02 (time varchar, attacker varchar, victim varchar, direction varchar, data varchar, net varchar, geo_data varchar, threat varchar) WITH \
+(kafka_topic='testTopic05', value_format='JSON');
+
+
+
+//查询嵌套json字段：
+select time, direction, extractjsonfield(geo_data,'$.City') as city from alarmInfostream3 emit changes;
+=============================创建持续流==========================================
+//创建持续实时普通流
+create stream A01 as select time, attacker, victim, direction, data, extractjsonfield(geo_data, '$.Country') as country, extractjsonfield(geo_data, '$.City') as city from alarmStream01 emit changes;
+
+
+//将从上述JSON对象中提取实例号作为INT
+CAST(EXTRACTJSONFIELD(message, '$.log.instance') AS INT)
+
+//创建持续实时告警流
+create stream A03 as select cast(time as bigint) as time, attacker, victim, direction, data, cast(extractjsonfield(threat, '$.confidence') as int) as confidence, \
+extractjsonfield(net, '$.http.status') as status, extractjsonfield(geo_data, '$.Country') as country, extractjsonfield(geo_data, '$.City') as city \
+from alarmStream02 emit changes;
+
+
+//创建持续实时普通流
+create stream flowStream as select time, direction, data, extractjsonfield(net, '$.proto'), extractjsonfield(net, '$.dest_ip') as dest_ip, 
+extractjsonfield(net, '$.dns.type') as netType, extractjsonfield(geo_data, '$.Country') as country, extractjsonfield(geo_data, '$.Province') as province, 
+extractjsonfield(geo_data, '$.City') as city
+from alarmStream01 emit changes;
+
+=====================ksql Table===============================================================================
+创建Table
+注意：创建表时必须指定key
+
+CREATE TABLE alarmInfoTable (time varchar, direction varchar) WITH \
+(kafka_topic='testTopic05', value_format='JSON', key='time');
+
+
+ksql> describe alarmInfo;
+
+ksql默认是从kafka最新的数据查询消费的，如果你想从开头查询，则需要在会话上进行设置
+ksql> set 'auto.offset.reset' = 'earliest';
+
+
+hour
+MINUTE
+==================创建一个具有流查询结果的ksqlDB表-普通流Table=====================
+create table a01_count as \
+select time, attacker, count(*) \
+from A01 window tumbling (size 10 SECONDS) \
+group by time, attacker emit changes;
+
+
+//滚动窗口
+WINDOW TUMBLING (SIZE 20 SECONDS)
+//跳跃窗口
+WINDOW HOPPING (SIZE 20 SECONDS, ADVANCE BY 5 SECONDS)
+//会话窗口
+WINDOW SESSION (20 SECONDS)
+==================告警流Table======================================================
+
+create table a02_count as \
+select time, attacker, victim, data, confidence, status, count(*) as cnt \
+from A02 window hopping (size 20 SECONDS, ADVANCE BY 5 SECONDS) \
+where confidence >= 60 and status = '404' \
+group by time,attacker,victim,data,confidence, status emit changes;
+
+//格式化时间
+create table a03_count as \
+select timestamptostring(time, 'yyyy-MM-dd HH:mm:ss') as time, attacker, victim, data, confidence, status, count(*) as cnt \
+from A03 window hopping (size 20 SECONDS, ADVANCE BY 5 SECONDS) \
+where confidence >= 60 and status = '404' \
+group by time,attacker,victim,data,confidence, status emit changes;
+===========================测试初始化完整流====================================
+//创建告警json流
+CREATE STREAM alarmStream (time varchar, attacker varchar, victim varchar, \
+direction varchar, data varchar, geoData struct<Country varchar, Province varchar, City varchar>, \
+net struct<dest_ip varchar, proto varchar, type varchar, http struct<status varchar>>, \
+threat struct<severity varchar, confidence varchar, params struct<username varchar>>) WITH \
+(kafka_topic='alarm_topic', value_format='JSON');
+
+
+//创建告警json表
+CREATE TABLE alarmTable (time varchar, attacker varchar, victim varchar, \
+direction varchar, data varchar) WITH \
+(kafka_topic='testTopic05', value_format='JSON');
+
+
+//创建普通json流：
+CREATE STREAM flowStream (time varchar, attacker varchar, victim varchar, \
+direction varchar, data varchar, geo_data struct<Country varchar, Province varchar, City varchar>, \
+net struct<dest_ip varchar, proto varchar, type varchar, dns struct<type varchar>>) WITH \
+(kafka_topic='flow_topic', value_format='JSON');
+
+//创建普通json表
+CREATE TABLE flowTable (time varchar, attacker varchar, victim varchar, \
+direction varchar, data varchar, geo_data struct<Country varchar, Province varchar, City varchar>, \
+net struct<dest_ip varchar, proto varchar, type varchar, dns struct<type varchar>>) WITH \
+(kafka_topic='flow_topic', value_format='JSON', key='time');
+
+===========================================================================
+//创建持续实时普通流
+create stream real_flow_stream as select \
+cast(time as bigint) as time, direction, data, attacker, victim, net->proto as proto, \
+net->dest_ip as dest_ip, inetaton(net->dest_ip) as new_dest_ip, net->type as netType, net->dns->type as dnsType, \
+geo_data->Country as country, geo_data->Province as province, geo_data->City as city \
+from flowStream emit changes;
+
+//创建持续实时普通表
+create table real_flow_table as select \
+cast(time as bigint) as time, direction, data, attacker, victim, net->proto as proto, \
+net->dest_ip as dest_ip, inetaton(net->dest_ip) as new_dest_ip, net->type as netType, net->dns->type as dnsType, \
+geo_data->Country as country, geo_data->Province as province, geo_data->City as city \
+from flowTable emit changes;
+
+
+//创建持续实时告警流
+create stream real_alarm_stream as select \
+cast(time as bigint) as time, attacker, victim, data, direction, \
+net->http->status as status, net->dest_ip as dest_ip, net->proto as proto, net->type as netType, \
+threat->confidence as confidence, threat->severity as severity, threat->params->username as username, \
+geoData->Country as country, geoData->Province as province, geoData->City as city \
+from alarmStream emit changes;
+
+===============按分钟统计UDP、TCP数量================
+你将可能得到满屏幕的结果；这是因为 KSQL 在每次给定的时间窗口更新时实际发出聚合值。
+
+create table udp_tcp_count as \
+select timestamptostring(time*1000, 'yyyy-MM-dd HH:mm') as time, \
+sum(case when proto='UDP' then 1 else 0 end ) UDP, \
+sum(case when proto='TCP' then 1 else 0 end ) TUP \
+from real_flow_stream window tumbling (size 60 SECONDS) \
+group by timestamptostring(time*1000, 'yyyy-MM-dd HH:mm') emit changes;
+
+
+create table abc as \
+select TIMESTAMPTOSTRING(WINDOWSTART, 'yyyy-MM-dd HH:mm:ss.SSS') as win_start,\
+TIMESTAMPTOSTRING(WINDOWEND, 'yyyy-MM-dd HH:mm:ss.SSS') as win_end,\
+time, UDP, TUP \
+from udp_tcp_count emit changes limit 50;
+
+
+select dest_ip, destIp_cnt from dest_ip_count04 emit changes limit 30;
+===============60秒统计一次攻击次数大于100的攻击者========================
+create table attacker_count as \
+select attacker, count(*) as cnt \
+from real_alarm_stream window hopping (size 60 SECONDS, ADVANCE BY 20 SECONDS) \
+where confidence >= 60 and status = '404' \
+and time > (now()-600) \
+group by attacker having count(*) > 100 emit changes;
+===============统计非内网ip的dest_ip数量=============
+create table dest_ip_count04 as \
+select dest_ip, count(*) as destIp_cnt \
+from real_flow_stream \
+where new_dest_ip not BETWEEN 2886729728 and 2887778303 \
+and new_dest_ip not BETWEEN 3232235520 and 3232301055 \
+and new_dest_ip not BETWEEN 167772160 and 184549375 \
+group by dest_ip emit changes;
+===============统计net.type种类======================
+create table net_type_cnt as \
+select netType, count(*) as netType_cnt \
+from real_flow_stream \
+GROUP BY netType;
+=====================================================
+//终止查询任务
+terminate CSAS_PAGEVIEWS2_0;
+
+show queries;
+
+
+
+
+
+

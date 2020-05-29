@@ -1,0 +1,12 @@
+#flume 说明
+
+#连接172.16.216.238服务器,cd flume目录:
+/opt/flume_test/bag/apache-flume-1.9.0-bin
+
+#启动: udp-flow.conf
+./bin/flume-ng agent -c /opt/flume_test/bag/apache-flume-1.9.0-bin/conf -f /opt/flume_test/bag/apache-flume-1.9.0-bin/conf/flume-udp-flow.conf -n agent -Dflume.root.logger=INFO,console
+
+#启动: udp-alarm.conf
+./bin/flume-ng agent -c /opt/flume_test/bag/apache-flume-1.9.0-bin/conf -f /opt/flume_test/bag/apache-flume-1.9.0-bin/conf/flume-udp-alarm.conf -n agent -Dflume.root.logger=INFO,console
+
+#停止接收数据: 按ctrl+c关闭
